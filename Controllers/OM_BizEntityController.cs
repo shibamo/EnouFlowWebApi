@@ -30,39 +30,48 @@ namespace EnouFlowWebApi.Controllers
     {
       var obj = db.bizEntities.Find(id);
       if (obj == null) return NotFound();
-      return Ok(OrgMgmtDBHelper.convertBizEntity2DTO(obj));
+      var bizEntityHelper = new BizEntityHelper();
+
+      return Ok(bizEntityHelper.convert2DTO(obj));
     }
 
     // POST: api/OM_BizEntity?orgSchemaId=1&bizEntityParentId=3
     [HttpPost]
     [ResponseType(typeof(BizEntityDTO))]
-    public IHttpActionResult Post([FromUri] int orgSchemaId, 
+    public IHttpActionResult Post([FromUri] int orgSchemaId,
       [FromUri] int bizEntityParentId, BizEntity value)
     {
       var bizEntityParent = db.bizEntities.Find(bizEntityParentId);
 
-      if (value==null || !ModelState.IsValid)
+      if (value == null || !ModelState.IsValid)
       {
         return BadRequest(ModelState);
       }
 
-      if (!OrgMgmtDBHelper.isOrgSchemaExists(orgSchemaId, db) ||
-        (bizEntityParentId>0 && bizEntityParent==null))
+      var orgSchemaHelper = new OrgSchemaHelper(db);
+      //if (!OrgMgmtDBHelper.isOrgSchemaExists(orgSchemaId, db) ||
+      if (!orgSchemaHelper.isObjectExists(orgSchemaId) ||
+        (bizEntityParentId > 0 && bizEntityParent == null))
       {
-        return BadRequest("数据错误!");
+        ModelState.AddModelError(
+          string.Empty,
+          "数据错误(invalid orgSchemaId or bizEntityParentId>0 && bizEntityParent==null)!");
+        return BadRequest(ModelState);
       }
 
+      var bizEntityHelper = new BizEntityHelper(db);
       try
       {
-        OrgMgmtDBHelper.saveCreatedBizEntity(
-          db.orgSchemas.Find(orgSchemaId), value, bizEntityParent, db);
+        //OrgMgmtDBHelper.saveCreatedBizEntity(
+        //  db.orgSchemas.Find(orgSchemaId), value, bizEntityParent, db);
+        bizEntityHelper.saveCreatedObject(db.orgSchemas.Find(orgSchemaId), value, bizEntityParent);
       }
       catch (Exception ex)
       {
         return BadRequest(ex.Message);
       }
 
-      return Ok(OrgMgmtDBHelper.convertBizEntity2DTO(value));
+      return Ok(bizEntityHelper.convert2DTO(value));
     }
 
     // PUT: api/OM_BizEntity/5
@@ -79,14 +88,16 @@ namespace EnouFlowWebApi.Controllers
         return BadRequest();
       }
 
-      if (!OrgMgmtDBHelper.isBizEntityExists(id, db))
+      var bizEntityHelper = new BizEntityHelper(db);
+
+      if (!bizEntityHelper.isObjectExists(id))
       {
         return NotFound();
       }
 
       try
       {
-        if (!OrgMgmtDBHelper.isBizEntityChangeAllowed(id, value, db))
+        if (!bizEntityHelper.isObjectChangeAllowed(id, value))
           return BadRequest("不允许修改对象!"); ;
       }
       catch (Exception ex)
@@ -96,21 +107,7 @@ namespace EnouFlowWebApi.Controllers
 
       db.Entry(value).State = EntityState.Modified;
 
-      try
-      {
-        db.SaveChanges();
-      }
-      catch (DbUpdateException)
-      {
-        if (!OrgMgmtDBHelper.isBizEntityExists(id, db))
-        {
-          return NotFound();
-        }
-        else
-        {
-          throw;
-        }
-      }
+      db.SaveChanges();
 
       return StatusCode(HttpStatusCode.NoContent);
     }
@@ -123,11 +120,12 @@ namespace EnouFlowWebApi.Controllers
       int orgSchemaId, int id, int bizEntityIdParent)
     {
       var bizEntityParent = db.bizEntities.Find(bizEntityIdParent);
+      var bizEntityHelper = new BizEntityHelper(db);
 
       try
       {
-        OrgMgmtDBHelper.setParentBizEntity(
-        id, bizEntityParent, orgSchemaId, db);
+        //OrgMgmtDBHelper.setParentBizEntity(id, bizEntityParent, orgSchemaId, db);
+        bizEntityHelper.setParentBizEntity(id, bizEntityParent, orgSchemaId);
       }
       catch (Exception ex)
       {
@@ -149,16 +147,18 @@ namespace EnouFlowWebApi.Controllers
         return NotFound();
       }
 
+      var bizEntityHelper = new BizEntityHelper(db);
       try
       {
-        OrgMgmtDBHelper.removeBizEntity(id, db);
+        //OrgMgmtDBHelper.removeBizEntity(id, db);
+        bizEntityHelper.removeObject(id);
       }
-      catch(Exception ex)
+      catch (Exception ex)
       {
         return BadRequest(ex.Message);
       }
 
-      return Ok(OrgMgmtDBHelper.convertBizEntity2DTO(obj));
+      return Ok(bizEntityHelper.convert2DTO(obj));
     }
   }
 }

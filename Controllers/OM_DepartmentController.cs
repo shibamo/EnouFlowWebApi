@@ -31,7 +31,9 @@ namespace EnouFlowWebApi.Controllers
     {
       var obj = db.departments.Find(id);
       if (obj == null) return NotFound();
-      return Ok(OrgMgmtDBHelper.convertDepartment2DTO(obj,db));
+
+      DepartmentHelper departmentHelper = new DepartmentHelper(db);
+      return Ok(departmentHelper.convert2DTO(obj));
     }
 
     // POST: api/OM_department?bizEntitySchemaId=1&departmentParentId=2
@@ -46,24 +48,26 @@ namespace EnouFlowWebApi.Controllers
       {
         return BadRequest(ModelState);
       }
-
-      if (!OrgMgmtDBHelper.isBizEntitySchemaExists(bizEntitySchemaId, db) ||
+      BizEntitySchemaHelper bizEntitySchemaHelper = new BizEntitySchemaHelper(db);
+      if (!bizEntitySchemaHelper.isObjectExists(bizEntitySchemaId) ||
         (departmentParentId > 0 && departmentParent == null))
       {
         return BadRequest("数据错误!");
       }
 
+      DepartmentHelper departmentHelper = new DepartmentHelper(db);
+
       try
       {
-        OrgMgmtDBHelper.saveCreatedDepartment(
-          db.bizEntitySchemas.Find(bizEntitySchemaId), value, departmentParent, db);
+        departmentHelper.saveCreatedObject(
+          db.bizEntitySchemas.Find(bizEntitySchemaId), value, departmentParent);
       }
       catch (Exception ex)
       {
         return BadRequest(ex.Message);
       }
 
-      return Ok(OrgMgmtDBHelper.convertDepartment2DTO(value, db));
+      return Ok(departmentHelper.convert2DTO(value));
     }
 
     // PUT: api/OM_Department/5
@@ -80,14 +84,15 @@ namespace EnouFlowWebApi.Controllers
         return BadRequest();
       }
 
-      if (!OrgMgmtDBHelper.isDepartmentExists(id, db))
-      {
-        return NotFound();
-      }
-
+      DepartmentHelper departmentHelper = new DepartmentHelper(db);
       try
       {
-        if (!OrgMgmtDBHelper.isDepartmentChangeAllowed(id, value, db))
+        if (!departmentHelper.isObjectExists(id))
+        {
+          return NotFound();
+        }
+
+        if (!departmentHelper.isObjectChangeAllowed(id, value))
           return BadRequest("不允许修改对象!");
         db.Entry(value).State = EntityState.Modified;
         db.SaveChanges();
@@ -108,10 +113,11 @@ namespace EnouFlowWebApi.Controllers
     {
       var bizDepartmentParent = db.departments.Find(departmentIdParent);
 
+      DepartmentHelper departmentHelper = new DepartmentHelper(db);
       try
       {
-        OrgMgmtDBHelper.setParentDepartment(
-        id, bizDepartmentParent, bizEntitySchemaId, db);
+        departmentHelper.setParentDepartment(
+          id, bizDepartmentParent, bizEntitySchemaId);
       }
       catch (Exception ex)
       {
@@ -134,7 +140,8 @@ namespace EnouFlowWebApi.Controllers
 
       try
       {
-        OrgMgmtDBHelper.removeDepartment(id, db);
+        DepartmentHelper departmentHelper = new DepartmentHelper(db);
+        departmentHelper.removeDepartment(id);
       }
       catch (Exception ex)
       {

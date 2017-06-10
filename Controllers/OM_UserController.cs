@@ -18,8 +18,10 @@ namespace EnouFlowWebApi.Controllers
     // GET: api/OM_User
     public IEnumerable<UserDTO> Get()
     {
+      UserHelper userHelper = new UserHelper(db);
+
       var users = db.users.ToList().Select(user =>
-        OrgMgmtDBHelper.convertUser2DTO(user, db, true));
+        userHelper.convert2DTO(user, true));
       return users;
     }
 
@@ -53,10 +55,10 @@ namespace EnouFlowWebApi.Controllers
         return BadRequest(ModelState);
       }
 
-      db.users.Add(value);
+      UserHelper userHelper = new UserHelper(db);
       try
       {
-        OrgMgmtDBHelper.saveCreatedUser(value, db);
+        userHelper.saveCreatedObject(value);
       }
       catch (Exception ex)
       {
@@ -80,14 +82,16 @@ namespace EnouFlowWebApi.Controllers
         return BadRequest();
       }
 
-      if (!OrgMgmtDBHelper.isUserExists(id, db))
+      UserHelper userHelper = new UserHelper(db);
+
+      if (!userHelper.isObjectExists(id))
       {
         return NotFound();
       }
 
       try
       {
-        if (!OrgMgmtDBHelper.isUserChangeAllowed(id, value, db))
+        if (!userHelper.isObjectChangeAllowed(id, value))
           return BadRequest("不允许修改对象!");
         db.Entry(value).State = EntityState.Modified;
         db.SaveChanges();
@@ -107,12 +111,12 @@ namespace EnouFlowWebApi.Controllers
     public IHttpActionResult SetDepartment(int departmentId, int id, 
       [FromBody] int userPosition)
     {
-      var department = db.departments.Find(departmentId);
-
+      UserHelper userHelper = new UserHelper(db);
       try
       {
-        OrgMgmtDBHelper.setUserDepartment(id, department, 
-          (UserPositionToDepartment)userPosition, db);
+        userHelper.setUserDepartment(id, 
+          db.departments.Find(departmentId), 
+          (UserPositionToDepartment)userPosition);
       }
       catch (Exception ex)
       {
@@ -128,11 +132,10 @@ namespace EnouFlowWebApi.Controllers
     [Route("api/OM_User/UnsetDepartment/{departmentId}/{id}")]
     public IHttpActionResult UnsetDepartment(int departmentId, int id)
     {
-      var department = db.departments.Find(departmentId);
-
+      UserHelper userHelper = new UserHelper(db);
       try
       {
-        OrgMgmtDBHelper.unsetUserDepartment(id, department,db);
+        userHelper.unsetUserDepartment(id, db.departments.Find(departmentId));
       }
       catch (Exception ex)
       {
@@ -148,11 +151,9 @@ namespace EnouFlowWebApi.Controllers
     [Route("api/OM_User/SetRole/{roleId}/{id}")]
     public IHttpActionResult SetRole(int roleId, int id)
     {
-      var role = db.roles.Find(roleId);
-
       try
       {
-        OrgMgmtDBHelper.setUserRole(id, role, db);
+        new UserHelper(db).setUserRole(id, db.roles.Find(roleId));
       }
       catch (Exception ex)
       {
@@ -168,11 +169,9 @@ namespace EnouFlowWebApi.Controllers
     [Route("api/OM_User/UnsetRole/{roleId}/{id}")]
     public IHttpActionResult UnsetRole(int roleId, int id)
     {
-      var role = db.roles.Find(roleId);
-
       try
       {
-        OrgMgmtDBHelper.unsetUserRole(id, role, db);
+        new UserHelper(db).unsetUserRole(id, db.roles.Find(roleId));
       }
       catch (Exception ex)
       {

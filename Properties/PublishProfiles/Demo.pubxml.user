@@ -6,7 +6,7 @@ by editing this MSBuild file. In order to learn more about this please visit htt
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <TimeStampOfAssociatedLegacyPublishXmlFile />
-    <_PublishTargetUrl>C:\data\MyProjs\99Flow\EnouFlow\Resources\webapi</_PublishTargetUrl>
+    <_PublishTargetUrl>C:\data\MyProjs\99Flow\EnouFlow\Publish\webapi</_PublishTargetUrl>
   </PropertyGroup>
   <ItemGroup>
     <File Include="Areas/HelpPage/HelpPage.css">
@@ -76,13 +76,13 @@ by editing this MSBuild file. In order to learn more about this please visit htt
       <publishTime>02/22/2013 07:43:40</publishTime>
     </File>
     <File Include="bin/EnouFlowOrgMgmtLib.dll">
-      <publishTime>03/12/2017 21:50:13</publishTime>
+      <publishTime>04/21/2017 23:33:54</publishTime>
     </File>
     <File Include="bin/EnouFlowTemplateLib.dll">
-      <publishTime>03/12/2017 21:50:14</publishTime>
+      <publishTime>04/21/2017 23:33:54</publishTime>
     </File>
     <File Include="bin/EnouFlowWebApi.dll">
-      <publishTime>03/12/2017 22:00:08</publishTime>
+      <publishTime>04/22/2017 00:18:06</publishTime>
     </File>
     <File Include="bin/EntityFramework.dll">
       <publishTime>03/02/2015 09:32:26</publishTime>

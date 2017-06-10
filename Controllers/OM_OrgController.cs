@@ -19,7 +19,7 @@ namespace EnouFlowWebApi.Controllers
     public IEnumerable<OrgDTO> Get()
     {
       var orgs = db.orgs.ToList().Select(org =>
-        OrgMgmtDBHelper.convertOrg2DTO(org));
+        new OrgHelper().convert2DTO(org)); //OrgMgmtDBHelper.convertOrg2DTO(org));
       return orgs;
     }
 
@@ -40,8 +40,9 @@ namespace EnouFlowWebApi.Controllers
     {
       var org = await db.orgs.FindAsync(orgId);
       if (org == null) return NotFound();
-      return Ok(OrgMgmtDBHelper.getOrgSchemaDTOs(org));
 
+      var orgHelper = new OrgHelper(db);
+      return Ok(orgHelper.getOrgSchemaDTOs(org));
     }
 
     // POST: api/OM_Org
@@ -53,16 +54,18 @@ namespace EnouFlowWebApi.Controllers
         return BadRequest(ModelState);
       }
 
-      db.orgs.Add(value);
+      var orgHelper = new OrgHelper(db);
+
       try
       {
-        OrgMgmtDBHelper.saveCreatedOrg(value, db);
+        //OrgMgmtDBHelper.saveCreatedOrg(value, db);
+        orgHelper.saveCreatedObject(value);
       }
       catch (Exception ex)
       {
         return BadRequest(ex.Message);
       }
-      var dto = OrgMgmtDBHelper.convertOrg2DTO(value);
+      var dto = orgHelper.convert2DTO(value); //OrgMgmtDBHelper.convertOrg2DTO(value);
       return CreatedAtRoute("DefaultApi", new { id = value.orgId }, dto);
     }
 
@@ -80,14 +83,18 @@ namespace EnouFlowWebApi.Controllers
         return BadRequest();
       }
 
-      if (!OrgMgmtDBHelper.isOrgExists(id, db))
+      OrgHelper orgHelper = new OrgHelper(db);
+
+      //if (!OrgMgmtDBHelper.isOrgExists(id, db))
+      if (!orgHelper.isObjectExists(id))
       {
         return NotFound();
       }
 
       try
       {
-        if (!OrgMgmtDBHelper.isOrgChangeAllowed(id, value, db))
+        //if (!OrgMgmtDBHelper.isOrgChangeAllowed(id, value, db))
+        if (!orgHelper.isObjectChangeAllowed(id, value))
           return BadRequest("不允许修改对象!"); ;
       }
       catch (Exception ex)
@@ -103,7 +110,8 @@ namespace EnouFlowWebApi.Controllers
       }
       catch (DbUpdateException)
       {
-        if (!OrgMgmtDBHelper.isOrgExists(id, db))
+        //if (!OrgMgmtDBHelper.isOrgExists(id, db))
+        if (!orgHelper.isObjectExists(id))
         {
           return NotFound();
         }
@@ -121,16 +129,22 @@ namespace EnouFlowWebApi.Controllers
     [ResponseType(typeof(OrgDTO))]
     public IHttpActionResult Delete(int id)
     {
+      //var org = db.orgs.Find(id);
+      //if (org == null)
+      //{
+      //  return NotFound();
+      //}
+
+      //org.isVisible = false;
+      //db.SaveChanges();
+
+      //return Ok(OrgMgmtDBHelper.convertOrg2DTO(org));
+      OrgHelper orgHelper = new OrgHelper(db);
+
+      orgHelper.removeObject(id);
+
       var org = db.orgs.Find(id);
-      if (org == null)
-      {
-        return NotFound();
-      }
-
-      org.isVisible = false;
-      db.SaveChanges();
-
-      return Ok(OrgMgmtDBHelper.convertOrg2DTO(org));
+      return Ok(orgHelper.convert2DTO(org));
     }
 
   }

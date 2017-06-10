@@ -41,15 +41,20 @@ namespace EnouFlowWebApi.Controllers
     [Route("api/OM_OrgSchema/Create/{orgId}")]
     public IHttpActionResult Post(OrgSchema value, [FromUri] int orgId)
     {
+      OrgHelper orgHelper = new OrgHelper(db);
+
       if (value == null || !ModelState.IsValid ||
-        !OrgMgmtDBHelper.isOrgExists(orgId, db))
+        !orgHelper.isObjectExists(orgId))
       {
         return BadRequest(ModelState);
       }
 
       try
       {
-        OrgMgmtDBHelper.saveCreatedOrgSchema(db.orgs.Find(orgId), value, db);
+        OrgSchemaHelper orgSchemaHelper = new OrgSchemaHelper(db);
+        value.Org = orgHelper.getObject(orgId);
+        orgSchemaHelper.saveCreatedObject(value);
+        //OrgMgmtDBHelper.saveCreatedOrgSchema(db.orgs.Find(orgId), value, db);
       }
       catch (Exception ex)
       {
@@ -73,14 +78,18 @@ namespace EnouFlowWebApi.Controllers
         return BadRequest();
       }
 
-      if (!OrgMgmtDBHelper.isOrgSchemaExists(id, db))
+      OrgSchemaHelper orgSchemaHelper = new OrgSchemaHelper(db);
+
+      //if (!OrgMgmtDBHelper.isOrgSchemaExists(id, db))
+      if (!orgSchemaHelper.isObjectExists(id))
       {
         return NotFound();
       }
 
       try
       {
-        if (!OrgMgmtDBHelper.isOrgSchemaChangeAllowed(id, value, db))
+        //if (!OrgMgmtDBHelper.isOrgSchemaChangeAllowed(id, value, db))
+        if (!orgSchemaHelper.isObjectChangeAllowed(id, value))
           return BadRequest("不允许修改对象!"); ;
       }
       catch (Exception ex)
@@ -96,7 +105,8 @@ namespace EnouFlowWebApi.Controllers
       }
       catch (DbUpdateException)
       {
-        if (!OrgMgmtDBHelper.isOrgSchemaExists(id, db))
+        //if (!OrgMgmtDBHelper.isOrgSchemaExists(id, db))
+        if (!orgSchemaHelper.isObjectExists(id))
         {
           return NotFound();
         }

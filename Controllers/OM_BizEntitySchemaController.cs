@@ -30,7 +30,10 @@ namespace EnouFlowWebApi.Controllers
     {
       var obj = db.bizEntitySchemas.Find(id);
       if (obj == null) return NotFound();
-      return Ok(OrgMgmtDBHelper.convertBizEntitySchema2DTO(obj,db));
+      BizEntitySchemaHelper bizEntitySchemaHelper = 
+        new BizEntitySchemaHelper(db);
+
+      return Ok(bizEntitySchemaHelper.convert2DTO(obj));
     }
 
     // POST: api/OM_BizEntitySchema/Create/1
@@ -39,24 +42,27 @@ namespace EnouFlowWebApi.Controllers
     [Route("api/OM_BizEntitySchema/Create/{bizEntityId}")]
     public IHttpActionResult Post(BizEntitySchema value, [FromUri] int bizEntityId)
     {
-      var bizEntity = db.bizEntities.Find(bizEntityId);
+      var bizEntityHelper = new BizEntityHelper(db);
 
       if (value == null || !ModelState.IsValid ||
-        !OrgMgmtDBHelper.isBizEntityExists(bizEntityId, db))
+        !bizEntityHelper.isObjectExists(bizEntityId))
       {
         return BadRequest(ModelState);
       }
 
+      var bizEntity = db.bizEntities.Find(bizEntityId);
+      BizEntitySchemaHelper bizEntitySchemaHelper = new BizEntitySchemaHelper(db);
       try
       {
-        OrgMgmtDBHelper.saveCreatedBizEntitySchema(value, bizEntity, db);
+        value.BizEntity = bizEntity;
+        bizEntitySchemaHelper.saveCreatedObject(value);
       }
       catch (Exception ex)
       {
         return BadRequest(ex.Message);
       }
 
-      return Ok(OrgMgmtDBHelper.convertBizEntitySchema2DTO(value,db));
+      return Ok(bizEntitySchemaHelper.convert2DTO(value));
     }
 
     // PUT: api/OM_BizEntitySchema/5
@@ -73,14 +79,16 @@ namespace EnouFlowWebApi.Controllers
         return BadRequest();
       }
 
-      if (!OrgMgmtDBHelper.isBizEntitySchemaExists(id, db))
+      BizEntitySchemaHelper bizEntitySchemaHelper = new BizEntitySchemaHelper(db);
+
+      if (!bizEntitySchemaHelper.isObjectExists(id))
       {
         return NotFound();
       }
 
       try
       {
-        if (!OrgMgmtDBHelper.isBizEntitySchemaChangeAllowed(id, value, db))
+        if (!bizEntitySchemaHelper.isObjectChangeAllowed(id, value))
           return BadRequest("不允许修改对象!"); ;
       }
       catch (Exception ex)
@@ -90,22 +98,7 @@ namespace EnouFlowWebApi.Controllers
 
       db.Entry(value).State = EntityState.Modified;
 
-      try
-      {
-        db.SaveChanges();
-      }
-      catch (DbUpdateException)
-      {
-        if (!OrgMgmtDBHelper.isBizEntitySchemaExists(id, db))
-        {
-          return NotFound();
-        }
-        else
-        {
-          throw;
-        }
-      }
-
+      db.SaveChanges();
       return StatusCode(HttpStatusCode.NoContent);
     }
 
@@ -120,10 +113,12 @@ namespace EnouFlowWebApi.Controllers
         return NotFound();
       }
 
+      BizEntitySchemaHelper bizEntitySchemaHelper = new BizEntitySchemaHelper(db);
+
       bizEntitySchema.isVisible = false;
       db.SaveChanges();
 
-      return Ok(OrgMgmtDBHelper.convertBizEntitySchema2DTO(bizEntitySchema,db));
+      return Ok(bizEntitySchemaHelper.convert2DTO(bizEntitySchema));
     }
   }
 }

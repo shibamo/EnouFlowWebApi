@@ -26,9 +26,10 @@ namespace EnouFlowWebApi.Controllers
     public IHttpActionResult Get(int id)
     {
       var roleType = db.roleTypes.Find(id);
+
       if (roleType == null) return NotFound();
-      return Ok(OrgMgmtDBHelper.convertRoleType2DTO(
-        roleType, db));
+
+      return Ok(new RoleTypeHelper(db).convert2DTO(roleType));
     }
 
     // POST: api/OM_RoleType
@@ -41,17 +42,19 @@ namespace EnouFlowWebApi.Controllers
         return BadRequest(ModelState);
       }
 
-      db.roleTypes.Add(value);
+      RoleTypeHelper roleTypeHelper = new RoleTypeHelper(db);
       try
       {
-        OrgMgmtDBHelper.saveCreatedRoleType(value, db);
+        roleTypeHelper.saveCreatedObject(value);
       }
       catch (Exception ex)
       {
         return BadRequest(ex.Message);
       }
-      return CreatedAtRoute("DefaultApi", new { id = value.roleTypeId },
-        OrgMgmtDBHelper.convertRoleType2DTO(value, db));
+
+      return CreatedAtRoute("DefaultApi", 
+        new { id = value.roleTypeId },
+        roleTypeHelper.convert2DTO(value));
     }
 
     // PUT: api/OM_RoleType/5
@@ -68,14 +71,16 @@ namespace EnouFlowWebApi.Controllers
         return BadRequest();
       }
 
-      if (!OrgMgmtDBHelper.isRoleTypeExists(id, db))
+      RoleTypeHelper roleTypeHelper = new RoleTypeHelper(db);
+
+      if (!roleTypeHelper.isObjectExists(id))
       {
         return NotFound();
       }
 
       try
       {
-        if (!OrgMgmtDBHelper.isRoleTypeChangeAllowed(id, value, db))
+        if (!roleTypeHelper.isObjectChangeAllowed(id, value))
           return BadRequest("不允许修改对象!");
         db.Entry(value).State = EntityState.Modified;
         db.SaveChanges();

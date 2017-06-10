@@ -18,8 +18,9 @@ namespace EnouFlowWebApi.Controllers
     // GET: api/OM_Role
     public IEnumerable<RoleDTO> Get()
     {
+      RoleHelper roleHelper = new RoleHelper(db);
       return db.roles.ToList().Select(
-        role => OrgMgmtDBHelper.convertRole2DTO(role, db));
+        role => roleHelper.convert2DTO(role));
     }
 
     // GET: api/OM_Role/5
@@ -28,7 +29,7 @@ namespace EnouFlowWebApi.Controllers
     {
       var role = db.roles.Find(id);
       if (role == null) return NotFound();
-      return Ok(OrgMgmtDBHelper.convertRole2DTO(role, db));
+      return Ok(new RoleHelper(db).convert2DTO(role));
     }
 
     // POST: api/OM_Role
@@ -41,10 +42,11 @@ namespace EnouFlowWebApi.Controllers
         return BadRequest(ModelState);
       }
 
+      RoleHelper roleHelper = new RoleHelper(db);
       db.roles.Add(value);
       try
       {
-        OrgMgmtDBHelper.saveCreatedRole(value, db);
+        roleHelper.saveCreatedObject(value);
       }
       catch (Exception ex)
       {
@@ -52,7 +54,7 @@ namespace EnouFlowWebApi.Controllers
       }
       return CreatedAtRoute("DefaultApi", 
         new { id = value.roleId },
-        OrgMgmtDBHelper.convertRole2DTO(value, db));
+        roleHelper.convert2DTO(value));
     }
 
     // PUT: api/OM_Role/5
@@ -69,14 +71,15 @@ namespace EnouFlowWebApi.Controllers
         return BadRequest();
       }
 
-      if (!OrgMgmtDBHelper.isRoleExists(id, db))
+      RoleHelper roleHelper = new RoleHelper(db);
+      if (!roleHelper.isObjectExists(id))
       {
         return NotFound();
       }
 
       try
       {
-        if (!OrgMgmtDBHelper.isRoleChangeAllowed(id, value, db))
+        if (!roleHelper.isObjectChangeAllowed(id, value))
           return BadRequest("不允许修改对象!");
         db.Entry(value).State = EntityState.Modified;
         db.SaveChanges();
@@ -99,7 +102,7 @@ namespace EnouFlowWebApi.Controllers
 
       try
       {
-        OrgMgmtDBHelper.setRole_RoleType(id, roleType, db);
+        new RoleHelper(db).setRole_RoleType(id, roleType);
       }
       catch (Exception ex)
       {
@@ -119,7 +122,7 @@ namespace EnouFlowWebApi.Controllers
 
       try
       {
-        OrgMgmtDBHelper.unsetRole_RoleType(id, roleType, db);
+        new RoleHelper(db).unsetRole_RoleType(id, roleType);
       }
       catch (Exception ex)
       {
